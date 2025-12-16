@@ -7,10 +7,10 @@
 #include "shaders.h"
 #include "mesh.h"
 #include "camera.h"
-#include <imgui.h>
 
-#include "imgui/backends/imgui_impl_glfw.h"
-#include "imgui/backends/imgui_impl_opengl3.h"
+#include <imgui.h>
+#include <imgui/backends/imgui_impl_glfw.h>
+#include <imgui/backends/imgui_impl_opengl3.h>
 
 namespace gl {
 

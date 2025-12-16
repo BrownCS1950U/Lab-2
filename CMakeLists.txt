@@ -2,57 +2,55 @@ cmake_minimum_required (VERSION 3.16)
 
 project (viewer)
 
-find_package(OpenGL REQUIRED)
-
-#Tells compiler to use c++ 20
 set(CMAKE_CXX_STANDARD 20)
-#Makes c++ 20 required
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-set (SOURCE_DIR "${PROJECT_SOURCE_DIR}/src/")
-set(IMGUI_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/External/imgui")
-set(GLFW_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/External/glfw")
-set(GLEW_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/External/glew")
-set(GLM_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/External/glm")
-set(STB_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/External/stb")
-
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
 
-#GLFW settings
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "")
-set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "")
-set(GLFW_BUILD_TESTS OFF CACHE BOOL "")
-set(GLFW_BUILD_DOCS OFF CACHE BOOL "")
-set(GLFW_INSTALL OFF CACHE BOOL "")
+# Enable the required dependencies
+set(DEP_GLFW ON CACHE BOOL "Build GLFW")
+set(DEP_GLM ON CACHE BOOL "Build GLM")
+set(DEP_GLEW ON CACHE BOOL "Build GLEW")
+set(DEP_FREETYPE ON CACHE BOOL "Build FreeType")
+set(DEP_STB ON CACHE BOOL "Include STB headers")
+set(DEP_IMGUI ON CACHE BOOL "Build Dear ImGui")
 
+# ImGui options
+set(DEP_IMGUI_BACKEND_GLFW ON CACHE BOOL "ImGui GLFW backend")
+set(DEP_IMGUI_BACKEND_OPENGL3 ON CACHE BOOL "ImGui OpenGL3 backend")
+set(DEP_IMGUI_FREETYPE ON CACHE BOOL "ImGui FreeType support")
+
+# Add dependencies
+add_subdirectory(dependencies)
+
+# Set up executable
+set(SOURCE_DIR "${PROJECT_SOURCE_DIR}/src")
 file (GLOB SOURCE_FILES "${SOURCE_DIR}/*.cpp")
-add_subdirectory(${GLFW_SOURCE_DIR})
-add_subdirectory(${GLM_SOURCE_DIR})
-add_subdirectory(${IMGUI_SOURCE_DIR})
-add_library(StaticGLEW STATIC ${GLEW_SOURCE_DIR}/src/glew.c)
+add_executable (${PROJECT_NAME} ${SOURCE_FILES})
 
-include_directories(
+target_include_directories(
+        ${PROJECT_NAME} PRIVATE
         ${GLFW_SOURCE_DIR}/include
         ${GLEW_SOURCE_DIR}/include
         ${IMGUI_SOURCE_DIR}
         ${STB_SOURCE_DIR}
 )
-add_executable (${PROJECT_NAME} ${SOURCE_FILES}
-        src/window.cpp
-        src/window.h
-        src/camera.cpp
-        src/camera.h)
 
-#target_link_libraries(${PROJECT_NAME} PRIVATE StaticGLEW)
-#target_link_libraries(${PROJECT_NAME} PRIVATE glfw)
-target_link_libraries(${PROJECT_NAME} PRIVATE ${OPENGL_LIBRARIES})
-target_link_libraries(${PROJECT_NAME} PRIVATE glm)
-target_link_libraries(${PROJECT_NAME} PRIVATE imgui)
+# OpenGL (system)
+find_package(OpenGL REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE OpenGL::GL)
+
+# Project dependencies
+target_link_libraries(${PROJECT_NAME} PRIVATE
+        # glfw  ## GLFW is linked implicitly via imgui
+        glm
+        glew_static
+        stb
+        imgui
+)
 
 if (WIN32)
     add_compile_definitions(GLEW_STATIC)
-    target_link_libraries(${PROJECT_NAME} opengl32)
-    target_link_libraries(${PROJECT_NAME} glu32)
+    target_link_libraries(${PROJECT_NAME} opengl32 glu32)
 endif()
 
 if (UNIX AND NOT APPLE)
