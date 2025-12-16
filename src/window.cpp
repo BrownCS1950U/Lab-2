@@ -1,4 +1,3 @@
-
 #include <vector>
 #include <GL/glew.h>
 #include <glm/gtc/type_ptr.hpp>
@@ -15,8 +14,10 @@
 namespace gl {
 
     float Window::sense = 1.0f;
-    bool Window::active_cursor = false;
+    bool Window::active_cursor = true;
     bool Window::cursorInsideWindow = true;
+    bool Window::firstMouseAfterToggle = true;
+
     GLuint Window::shaderProgram = 0;
 
     int Window::render_mode = 0;
@@ -39,6 +40,7 @@ namespace gl {
     bool Window::isActive() {
         return !glfwWindowShouldClose(glfwWindow);
     }
+
     void Window::resize_window(GLFWwindow* window, int width, int height) {
         window_width = width;
         window_height = height;
@@ -57,47 +59,75 @@ namespace gl {
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "uMVP"),
                                     1, GL_FALSE, glm::value_ptr(MVP));
     }
+
     void Window::keyboard(GLFWwindow* window, int key, int scancode, int action, int mods) {
+        // Let ImGui handle the input first
+        ImGuiIO& io = ImGui::GetIO();
 
-        if (action == GLFW_PRESS){
-            keys[key] = true;
-            switch(key){
+        // Only process our custom input if ImGui doesn't want to capture it
+        if (!io.WantCaptureKeyboard) {
+            if (action == GLFW_PRESS){
+                keys[key] = true;
+                switch(key){
+                    case GLFW_KEY_ESCAPE: exit(0); break;
+                    case GLFW_KEY_SPACE: {
+                        active_cursor = !active_cursor;
 
-                case GLFW_KEY_ESCAPE: exit(0); break;
-                case GLFW_KEY_SPACE: {
-                    active_cursor = !active_cursor;
-
-                    active_cursor ? glfwSetInputMode(glfwWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED) :
-                                    glfwSetInputMode(glfwWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-                } break;
-                case GLFW_KEY_R: {
-                    gl::Camera::reset_camera();
-                    sense = 1.0f;
-                } break;
-                default: std::cout << "Key not covered!\n"; break;
+                        if (active_cursor) {
+                            glfwSetInputMode(glfwWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                            ImGui::SetMouseCursor(ImGuiMouseCursor_None);
+                        } else {
+                            glfwSetInputMode(glfwWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                            ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
+                        }
+                        firstMouseAfterToggle = true;
+                    } break;
+                    case GLFW_KEY_R: {
+                        gl::Camera::reset_camera();
+                        sense = 1.0f;
+                    } break;
+                    default: break;
+                }
             }
-        }
-        else if (action == GLFW_RELEASE) {
-            keys[key] = false;
+            else if (action == GLFW_RELEASE) {
+                keys[key] = false;
+            }
+        } else {
+            // If ImGui wants the keyboard, clear our key states
+            if (action == GLFW_RELEASE) {
+                keys[key] = false;
+            }
         }
     }
 
     void Window::scroll(GLFWwindow * window, double xoffset, double yoffset) {
-        gl::Camera::processScroll(yoffset);
+        ImGuiIO& io = ImGui::GetIO();
+
+        // Only process scroll if ImGui doesn't want to capture it
+        if (!io.WantCaptureMouse) {
+            gl::Camera::processScroll(yoffset);
+        }
     }
 
     void Window::cursor_enter_callback(GLFWwindow* window, int entered) {
         if (entered) {
-            Window::cursorInsideWindow = true;  // Cursor is inside the window
+            Window::cursorInsideWindow = true;
         } else {
-            Window::cursorInsideWindow = false; // Cursor left the window
+            Window::cursorInsideWindow = false;
         }
     }
 
     void Window::mouse(GLFWwindow * window, double xpos, double ypos) {
-        if (!Window::cursorInsideWindow) return;
-        Window::sense = 0.1f;
-        gl::Camera::processMouse(xpos * Window::sense, ypos * Window::sense);
+        ImGuiIO& io = ImGui::GetIO();
+        if (firstMouseAfterToggle) {
+            firstMouseAfterToggle = false;
+            return;
+        }
+        // Only process mouse movement if ImGui doesn't want to capture it and cursor is active
+        if (!io.WantCaptureMouse && active_cursor && cursorInsideWindow) {
+            Window::sense = 0.1f;
+            gl::Camera::processMouse(xpos * Window::sense, ypos * Window::sense);
+        }
     }
 
     void Window::drag_drop(GLFWwindow* window, int count, const char** paths) {
@@ -117,14 +147,17 @@ namespace gl {
         // =========== INITIALIZING WINDOW ===========
 
         if (!glfwInit()) return -1;
+
+        // OpenGL context hints
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #ifdef __APPLE__
-        glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_FALSE); // Disable Retina scaling
+        glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_FALSE);
 #endif
 
+        // Create window
         glfwWindow = glfwCreateWindow(window_width, window_height, "Scene Viewer", nullptr, nullptr);
         if (!glfwWindow) {
             const char* errorMsg;
@@ -133,18 +166,10 @@ namespace gl {
             glfwTerminate();
             return err;
         }
+
+        // Context management
         glfwMakeContextCurrent(glfwWindow);
-        glfwSwapInterval(1);
-
-        glfwSetDropCallback(glfwWindow, drag_drop);
-        glfwSetCursorPosCallback(glfwWindow, mouse);
-        glfwSetScrollCallback(glfwWindow, scroll);
-        glfwSetKeyCallback(glfwWindow, keyboard);
-        glfwSetInputMode(glfwWindow, GLFW_STICKY_KEYS, GLFW_TRUE);
-        glfwSetInputMode(glfwWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-        glfwSetCursorEnterCallback(glfwWindow, cursor_enter_callback);
-
-        glfwSetWindowSizeCallback(glfwWindow, resize_window);
+        glfwSwapInterval(1); // VSync
 
         // =========== INITIALIZING OPENGL ===========
         glewExperimental = GL_TRUE;
@@ -157,11 +182,22 @@ namespace gl {
 
         // =========== INITIALIZING IMGUI ===========
         ImGui::CreateContext();
-        ImGui_ImplGlfw_InitForOpenGL(glfwWindow, true);
+        // Pass 'false' to prevent ImGui from installing its own callbacks
+        ImGui_ImplGlfw_InitForOpenGL(glfwWindow, false);
         ImGui_ImplOpenGL3_Init("#version 410 core");
         ImGui::StyleColorsDark();
         ImGuiStyle& style = ImGui::GetStyle();
         style.Colors[ImGuiCol_WindowBg].w = 0.7f;
+
+        // Install our callbacks AFTER ImGui initialization
+        glfwSetDropCallback(glfwWindow, drag_drop);
+        glfwSetCursorPosCallback(glfwWindow, mouse);
+        glfwSetScrollCallback(glfwWindow, scroll);
+        glfwSetKeyCallback(glfwWindow, keyboard);
+        // Note: GLFW_STICKY_KEYS removed - we're tracking keys manually in keys[] array
+        glfwSetInputMode(glfwWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        glfwSetCursorEnterCallback(glfwWindow, cursor_enter_callback);
+        glfwSetWindowSizeCallback(glfwWindow, resize_window);
 
         // =========== INITIALIZING SHADERS ===========
         GLuint vertexShader = gl::Shader::init_shaders(GL_VERTEX_SHADER, "../res/shaders/vertex.glsl");
@@ -234,26 +270,31 @@ namespace gl {
 
     void Window::update() {
 
-        static double lastTime = glfwGetTime();
-        double currentTime = glfwGetTime();
+        // Use ImGui's time instead of GLFW's
+        static double lastTime = ImGui::GetTime();
+        double currentTime = ImGui::GetTime();
         float deltaTime = static_cast<float>(currentTime - lastTime);
         lastTime = currentTime;
 
-        // Handle continuous movement
-        float speed = 5.0f; // Adjust speed as needed
+        // Handle continuous movement (this needs to be polled each frame)
+        ImGuiIO& io = ImGui::GetIO();
+        if (!io.WantCaptureKeyboard) {
+            float speed = 5.0f;
+            glm::vec3 direction(0.0f);
 
-        glm::vec3 direction(0.0f);
-        if (keys[GLFW_KEY_W]) direction.z += 1.0f; // Forward
-        if (keys[GLFW_KEY_S]) direction.z -= 1.0f; // Backward
-        if (keys[GLFW_KEY_A]) direction.x -= 1.0f; // Left
-        if (keys[GLFW_KEY_D]) direction.x += 1.0f; // Right
-        if (keys[GLFW_KEY_E]) direction.y += 1.0f; // Up
-        if (keys[GLFW_KEY_Q]) direction.y -= 1.0f; // Down
+            if (keys[GLFW_KEY_W]) direction.z += 1.0f; // Forward
+            if (keys[GLFW_KEY_S]) direction.z -= 1.0f; // Backward
+            if (keys[GLFW_KEY_A]) direction.x -= 1.0f; // Left
+            if (keys[GLFW_KEY_D]) direction.x += 1.0f; // Right
+            if (keys[GLFW_KEY_E]) direction.y += 1.0f; // Up
+            if (keys[GLFW_KEY_Q]) direction.y -= 1.0f; // Down
 
-        if (glm::length(direction) > 0) {
-            direction = glm::normalize(direction);
-            gl::Camera::move(direction, speed * deltaTime);
+            if (glm::length(direction) > 0) {
+                direction = glm::normalize(direction);
+                gl::Camera::move(direction, speed * deltaTime);
+            }
         }
+
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
@@ -317,6 +358,7 @@ namespace gl {
 
         ////////////////////////////////////////////////////////////////////////////////////////////////
 
+        // Buffer swapping and event polling - REQUIRED, no ImGui equivalent
         glfwSwapBuffers(glfwWindow);
         glfwPollEvents();
     }

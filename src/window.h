@@ -25,6 +25,8 @@ private:
     static float sense;
     static bool active_cursor;
     static bool cursorInsideWindow;
+    static bool firstMouseAfterToggle;
+
     static GLuint shaderProgram;
     static int render_mode;
     static bool keys[1024];
