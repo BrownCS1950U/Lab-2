@@ -61,6 +61,9 @@ namespace gl {
     }
 
     void Window::keyboard(GLFWwindow* window, int key, int scancode, int action, int mods) {
+        // Forward to ImGui
+        ImGui_ImplGlfw_KeyCallback(window, key, scancode, action, mods);
+
         // Let ImGui handle the input first
         ImGuiIO& io = ImGui::GetIO();
 
@@ -101,6 +104,9 @@ namespace gl {
     }
 
     void Window::scroll(GLFWwindow * window, double xoffset, double yoffset) {
+        // Forward to ImGui
+        ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset);
+
         ImGuiIO& io = ImGui::GetIO();
 
         // Only process scroll if ImGui doesn't want to capture it
@@ -118,6 +124,9 @@ namespace gl {
     }
 
     void Window::mouse(GLFWwindow * window, double xpos, double ypos) {
+        // Forward to ImGui
+        ImGui_ImplGlfw_CursorPosCallback(window, xpos, ypos);
+
         ImGuiIO& io = ImGui::GetIO();
         if (firstMouseAfterToggle) {
             firstMouseAfterToggle = false;
@@ -128,6 +137,10 @@ namespace gl {
             Window::sense = 0.1f;
             gl::Camera::processMouse(xpos * Window::sense, ypos * Window::sense);
         }
+    }
+
+    void Window::mouseButton(GLFWwindow* window, int button, int action, int mods) {
+        ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
     }
 
     void Window::drag_drop(GLFWwindow* window, int count, const char** paths) {
@@ -194,6 +207,8 @@ namespace gl {
         glfwSetCursorPosCallback(glfwWindow, mouse);
         glfwSetScrollCallback(glfwWindow, scroll);
         glfwSetKeyCallback(glfwWindow, keyboard);
+        glfwSetMouseButtonCallback(glfwWindow, mouseButton);
+
         // Note: GLFW_STICKY_KEYS removed - we're tracking keys manually in keys[] array
         glfwSetInputMode(glfwWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         glfwSetCursorEnterCallback(glfwWindow, cursor_enter_callback);

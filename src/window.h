@@ -14,6 +14,7 @@ public:
     static void scroll(GLFWwindow * window, double xoffset, double yoffset);
     static void cursor_enter_callback(GLFWwindow* window, int entered);
     static void mouse(GLFWwindow * window, double xpos, double ypos);
+    static void mouseButton(GLFWwindow* window, int button, int action, int mods);
     static void drag_drop(GLFWwindow * window, int count, const char** paths);
     static int initialize(const std::string& filename);
     static void display();
