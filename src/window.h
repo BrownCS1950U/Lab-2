@@ -19,6 +19,7 @@ public:
     static void update();
     static bool isActive();
     static void cleanup();
+    static void updateMVP(const DataTex& data);
     static void applyTextureFiltering();
 
 private:

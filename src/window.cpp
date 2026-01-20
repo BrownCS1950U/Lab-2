@@ -97,6 +97,20 @@ void Window::applyTextureFiltering() {
     }
 }
 
+void Window::updateMVP(const DataTex& data) {
+    // Compute scaling factor
+    glm::mat2x3 borders = {data.m_draw_objects[0].bmin, data.m_draw_objects[0].bmax};
+    float maxExtent = std::max({0.5f * (borders[1][0] - borders[0][0]),
+                                0.5f * (borders[1][1] - borders[0][1]),
+                                0.5f * (borders[1][2] - borders[0][2])});
+    glm::mat4 view  = Camera::getViewMatrix();
+    glm::mat4 proj  = Camera::getProjection(aspect_ratio);
+    glm::mat4 model = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f / maxExtent));
+    glm::mat4 MVP   = proj * view * model;
+
+    glUniform4fv(glGetUniformLocation(shaderProgram, "uMVP"),1, glm::value_ptr(model));
+}
+
 void Window::resize_window(GLFWwindow* window, int width, int height) {
     // Enforce the original aspect ratio
     int corrected_height = static_cast<int>(width / aspect_ratio);
@@ -115,11 +129,7 @@ void Window::resize_window(GLFWwindow* window, int width, int height) {
 
     glViewport(vp, 0, width - vp, height);
 
-    glm::mat4 proj = Camera::getProjection(aspect_ratio);
-    glm::mat4 modelView = Camera::getViewMatrix();
-    glm::mat4 MVP = proj * modelView;
-    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "uMVP"),
-                                1, GL_FALSE, glm::value_ptr(MVP));
+   // updateMVP();
 }
 
 void Window::keyboard(GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -332,21 +342,7 @@ void Window::display() {
             continue;
         }
 
-        // Compute scaling factor
-        glm::mat2x3 borders = {data.m_draw_objects[0].bmin, data.m_draw_objects[0].bmax};
-        float maxExtent = std::max({0.5f * (borders[1][0] - borders[0][0]),
-                                    0.5f * (borders[1][1] - borders[0][1]),
-                                    0.5f * (borders[1][2] - borders[0][2])});
-
-        glm::mat4 view = Camera::getViewMatrix();
-        glm::mat4 proj = Camera::getProjection(aspect_ratio);
-        glm:: mat4 model = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f / maxExtent));
-        glm::mat4 MVP = proj * view * model;
-
-        // Send MVP to shader
-
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "uMVP"),
-                           1, GL_FALSE, glm::value_ptr(MVP));
+        updateMVP(data);
 
         if (render_mode == 0){
             Mesh::draw(GL_FRONT_AND_BACK, GL_FILL, shaderProgram, data);
