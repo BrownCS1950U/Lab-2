@@ -175,7 +175,12 @@ void Window::drag_drop(GLFWwindow* window, int count, const char** paths) {
     std::cout << "Dropped files: " << count << std::endl;
     for (int i = 0; i < count; i++) {
         std::cout << "File " << i + 1 << ": " << paths[i] << std::endl;
-        m_data.push_back(Mesh::load_obj(paths[i]));
+        DataTex obj = Mesh::load_obj(paths[i]);
+        if (!obj.m_draw_objects.empty()) {
+            m_data.push_back(std::move(obj));
+        } else {
+            std::cerr << "Warning: Failed to load mesh from " << paths[i] << std::endl;
+        }
     }
 }
 
@@ -254,7 +259,11 @@ int Window::initialize(const std::string& filename) {
 
     // =========== LOADING .OBJ ===========
     DataTex newObj = Mesh::load_obj(filename);
-    m_data.push_back(newObj);
+    if (newObj.m_draw_objects.empty()) {
+        std::cerr << "Error: Failed to load mesh from " << filename << std::endl;
+        return -1;
+    }
+    m_data.push_back(std::move(newObj));
     return 1;
 }
 
@@ -285,6 +294,11 @@ void Window::display() {
     glUniform4fv(glGetUniformLocation(shaderProgram, "light_col"), num_lights, glm::value_ptr(lightCol[0]));
 
     for(DataTex& data : m_data) {
+        // Skip empty meshes
+        if (data.m_draw_objects.empty()) {
+            continue;
+        }
+
         // Compute scaling factor
         glm::mat2x3 borders = {data.m_draw_objects[0].bmin, data.m_draw_objects[0].bmax};
         float maxExtent = std::max({0.5f * (borders[1][0] - borders[0][0]),
