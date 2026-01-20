@@ -20,6 +20,7 @@ public:
     static void update();
     static bool isActive();
     static void cleanup();
+    static void applyTextureFiltering();
 
 private:
     // Variables to hold state
@@ -30,6 +31,8 @@ private:
 
     static GLuint shaderProgram;
     static int render_mode;
+    static int filter_mode;  // 0 = Bilinear, 1 = Trilinear, 2 = Anisotropic
+    static bool vsync_enabled;
     static bool keys[1024];
     static int window_width, window_height;
     static int current_vp_height, current_vp_width;

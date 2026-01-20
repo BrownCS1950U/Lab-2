@@ -19,6 +19,8 @@ bool Window::firstMouseAfterToggle = true;
 GLuint Window::shaderProgram = 0;
 
 int Window::render_mode = 0;
+int Window::filter_mode = 1;  // 0 = None, 1 = Bilinear, 2 = Trilinear, 3 = Anisotropic
+bool Window::vsync_enabled = true;
 bool Window::keys[1024] = { false };
 int Window::window_width = 1920;
 int Window::window_height = 1080;
@@ -61,6 +63,38 @@ void Window::cleanup() {
 
 bool Window::isActive() {
     return !glfwWindowShouldClose(glfwWindow);
+}
+
+void Window::applyTextureFiltering() {
+    for (auto& data : m_data) {
+        for (auto& [name, texId] : data.textures) {
+            glBindTexture(GL_TEXTURE_2D, texId);
+
+            switch (filter_mode) {
+                case 0: // None (Nearest)
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                    break;
+                case 1: // Bilinear
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                    break;
+                case 2: // Trilinear
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                    break;
+                case 3: // Anisotropic
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                    GLfloat maxAniso;
+                    glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
+                    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAniso);
+                    break;
+            }
+
+            glBindTexture(GL_TEXTURE_2D, 0);
+        }
+    }
 }
 
 void Window::resize_window(GLFWwindow* window, int width, int height) {
@@ -372,14 +406,15 @@ void Window::update() {
 
     ImGui::Separator(); ImGui::TextColored({0.0f,1.0f,1.0f,1.0f}, "Render Mode"); ImGui::Separator();
     ImGui::Text("Primitive object ");
-    ImGui::Button("Smooth", ImVec2(50.0f, 25.0f)) ? render_mode = 0 : 0; ImGui::SameLine();
-    ImGui::Button("Lines", ImVec2(50.0f, 25.0f)) ? render_mode = 1 : 0; ImGui::SameLine();
-    ImGui::Button("Pnt Cld", ImVec2(50.0f, 25.0f)) ? render_mode = 2 : 0; ImGui::SameLine();
+    ImGui::Button("Smooth", ImVec2(75.0f, 25.0f)) ? render_mode = 0 : 0; ImGui::SameLine();
+    ImGui::Button("Lines", ImVec2(75.0f, 25.0f)) ? render_mode = 1 : 0; ImGui::SameLine();
+    ImGui::Button("Point Cloud", ImVec2(90.0f, 25.0f)) ? render_mode = 2 : 0; ImGui::SameLine();
+    ImGui::Text(" ");
+    ImGui::Text(" ");
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     ImGui::Separator(); ImGui::TextColored({0.0f, 1.0f, 1.0f, 1.0f}, "Control Instructions"); ImGui::Separator();
-    ImGui::Text("");
     ImGui::Text("Drag & Drop Your .OBJ file!");
     ImGui::Text("");
     ImGui::Text("   Up : W | S : Down");
@@ -402,14 +437,27 @@ void Window::update() {
     ImGui::Text("X: %.1f, Y: %.1f, Z: %.1f", pos.x, pos.y, pos.z); ImGui::Separator();
     ImGui::Text("Camera Rotation: ");
     ImGui::Text("Roll: %.1f, Pitch: %.1f, Yaw: %.1f", rot.x, rot.y, rot.z);
+    ImGui::Text(" ");
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
     ImGui::Separator(); ImGui::TextColored({0.0f, 1.0f, 1.0f, 1.0f}, "Render Settings"); ImGui::Separator();
 
-   // ImGui::Checkbox("Enable VSync",
+    if (ImGui::Checkbox("Enable VSync", &vsync_enabled)) {
+        glfwSwapInterval(vsync_enabled ? 1 : 0);
+    }
+
+    ImGui::Text("Filtering Mode: ");
+    const char* filter_options[] = { "None", "Bilinear", "Trilinear", "Anisotropic" };
+    if (ImGui::Combo(" ", &filter_mode, filter_options, 4)) {
+        applyTextureFiltering();
+    }
+    ImGui::Text(" ");
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
     ImGui::Separator(); ImGui::TextColored({0.0f, 1.0f, 1.0f, 1.0f}, "Lighting"); ImGui::Separator();
-    ImGui::Text("Most lights are switched off by default, and the below");
-    ImGui::Text("sliders can play with the light positions and color intensities");
+    ImGui::Text("Most lights are switched off by default.");
+    ImGui::Text("The belowsliders can play with the light ");
+    ImGui::Text("positions and color intensities.");
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     display();

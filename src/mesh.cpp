@@ -87,6 +87,7 @@ std::vector<tinyobj::material_t> materials;
         }
 
         glTexImage2D(GL_TEXTURE_2D, 0, format, w, h, 0, format, GL_UNSIGNED_BYTE, image);
+        glGenerateMipmap(GL_TEXTURE_2D);
 
         glBindTexture(GL_TEXTURE_2D, 0);
         stbi_image_free(image);
