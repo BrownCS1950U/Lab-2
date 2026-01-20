@@ -281,9 +281,8 @@ int Window::initialize(const std::string& filename) {
     glfwSetCursorEnterCallback(glfwWindow, cursor_enter_callback);
     glfwSetWindowSizeCallback(glfwWindow, resize_window);
 
-    // Compute and store the initial aspect ratio (viewport excludes UI panel)
-    int initial_vp_width = window_width - (window_width / 6);
-    aspect_ratio = static_cast<float>(initial_vp_width) / static_cast<float>(window_height);
+    // Compute and store the initial aspect ratio
+    aspect_ratio = static_cast<float>(window_width) / static_cast<float>(window_height);
 
     // =========== INITIALIZING SHADERS ===========
     GLuint vertexShader = Shader::init_shaders(GL_VERTEX_SHADER, "../res/shaders/vertex.glsl");

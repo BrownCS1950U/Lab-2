@@ -112,9 +112,6 @@ std::vector<tinyobj::material_t> materials;
         try_bind(mat.diffuse_texname,            "u_diffuseTex",         1);
         try_bind(mat.specular_texname,           "u_specularTex",        2);
         try_bind(mat.specular_highlight_texname, "u_specularHighTex",    3);
-        try_bind(mat.bump_texname,               "u_bumpTex",            4);
-        try_bind(mat.reflection_texname,         "u_reflectionTex",      5);
-        try_bind(mat.alpha_texname,              "u_alphaTex",           6);
     }
 
     DataTex Mesh::load_obj(const std::string &filename) {
@@ -152,9 +149,6 @@ std::vector<tinyobj::material_t> materials;
             if(!mat.diffuse_texname.empty()) load_texture(filename, mat.diffuse_texname, data);
             if(!mat.specular_texname.empty()) load_texture(filename, mat.specular_texname, data);
             if(!mat.specular_highlight_texname.empty()) load_texture(filename, mat.specular_highlight_texname, data);
-            if(!mat.alpha_texname.empty()) load_texture(filename, mat.alpha_texname, data);
-            if(!mat.bump_texname.empty()) load_texture(filename, mat.bump_texname, data);
-            if(!mat.reflection_texname.empty()) load_texture(filename, mat.reflection_texname, data);
         }
 
         glm::vec3 bmin(FLT_MAX);
@@ -180,30 +174,7 @@ std::vector<tinyobj::material_t> materials;
                         materials[current_material_id].ambient[1],
                         materials[current_material_id].ambient[2]
                 };
-                o.diffuse = {
-                        materials[current_material_id].diffuse[0],
-                        materials[current_material_id].diffuse[1],
-                        materials[current_material_id].diffuse[2]
-                };
-                o.specular = {
-                        materials[current_material_id].specular[0],
-                        materials[current_material_id].specular[1],
-                        materials[current_material_id].specular[2]
-                };
-                o.transmittance = {
-                        materials[current_material_id].transmittance[0],
-                        materials[current_material_id].transmittance[1],
-                        materials[current_material_id].transmittance[2]
-                };
-                o.emission = {
-                        materials[current_material_id].emission[0],
-                        materials[current_material_id].emission[1],
-                        materials[current_material_id].emission[2]
-                };
                 o.shininess = materials[current_material_id].shininess;
-                o.ior = materials[current_material_id].ior;
-                o.dissolve = materials[current_material_id].dissolve;
-                o.illum = materials[current_material_id].illum;
 
                 glm::mat3x2 tc(0.0f);
                 if (!inattrib.texcoords.empty() && ((idx0.texcoord_index >= 0) ||
@@ -269,9 +240,6 @@ std::vector<tinyobj::material_t> materials;
                 o.texNames.diffuse_texname = mat.diffuse_texname;
                 o.texNames.specular_texname = mat.specular_texname;
                 o.texNames.specular_highlight_texname = mat.specular_highlight_texname;
-                o.texNames.bump_texname = mat.bump_texname;
-                o.texNames.alpha_texname = mat.alpha_texname;
-                o.texNames.reflection_texname = mat.reflection_texname;
             }
 
             if (!buffer.empty()) {
@@ -323,14 +291,7 @@ std::vector<tinyobj::material_t> materials;
             }
 
             glUniform3fv(glGetUniformLocation(programID, "ambient"), 1, glm::value_ptr(o.ambient));
-            glUniform3fv(glGetUniformLocation(programID, "diffuse"),  1, glm::value_ptr(o.diffuse));
-            glUniform3fv(glGetUniformLocation(programID, "specular"), 1, glm::value_ptr(o.specular));
-            glUniform3fv(glGetUniformLocation(programID, "transmittance"), 1, glm::value_ptr(o.transmittance));
-            glUniform3fv(glGetUniformLocation(programID, "emission"), 1, glm::value_ptr(o.emission));
             glUniform1fv(glGetUniformLocation(programID, "shininess"), 1, &o.shininess);
-            glUniform1fv(glGetUniformLocation(programID, "ior"), 1, &o.ior);
-            glUniform1fv(glGetUniformLocation(programID, "dissolve"), 1, &o.dissolve);
-            glUniform1i(glGetUniformLocation(programID, "illum"), o.illum);
 
             glDrawArrays(GL_TRIANGLES, 0, 3 * o.numTriangles);
             glBindVertexArray(0);

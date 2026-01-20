@@ -10,9 +10,6 @@ uniform sampler2D u_ambientTex;
 uniform sampler2D u_diffuseTex;
 uniform sampler2D u_specularTex;
 uniform sampler2D u_specularHighTex;
-uniform sampler2D u_bumpTex;
-uniform sampler2D u_reflectionTex;
-uniform sampler2D u_alphaTex;
 
 // Constants
 const int num_lights = 5;
@@ -21,19 +18,11 @@ const int num_lights = 5;
 out vec4 fragColor;
 
 // Uniforms
-uniform mat4 uModelView;
-uniform vec4 light_posn[num_lights];  // Light positions (in eye space)
-uniform vec4 light_col[num_lights];   // Light colors
+uniform vec4 light_posn[num_lights];
+uniform vec4 light_col[num_lights];
 
 uniform vec3 ambient;
-uniform vec3 diffuse;
-uniform vec3 specular;
-uniform vec3 transmittance;
-uniform vec3 emission;
-uniform float ior;
-uniform float dissolve;
 uniform float shininess;
-uniform int illum;
 
 // Compute Phong Lighting
 vec4 compute_lighting(vec3 direction, vec4 lightcolor, vec3 normal, vec3 halfvec, vec4 mydiffuse, vec4 myspecular, float myshininess, float distance) {
@@ -55,16 +44,13 @@ void main() {
     vec4 diffuseColor = texture(u_diffuseTex, m_texcoord);
     vec4 specularColor = texture(u_specularTex, m_texcoord);
     vec4 specularHighlight = texture(u_specularHighTex, m_texcoord);
-    vec4 bumpMap = texture(u_bumpTex, m_texcoord);
-    vec4 reflectionColor = texture(u_reflectionTex, m_texcoord);
-    vec4 alphaColor = texture(u_alphaTex, m_texcoord);
 
     float ambient_light = 0.5;
     // Start with ambient color
     vec4 finalColor = vec4((ambient * ambientColor.xyz) * ambient_light, 1.0);
 
     // Normalize normal
-    vec3 normal = normalize(m_normal + bumpMap.rgb * 2.0 - 1.0);
+    vec3 normal = normalize(m_normal);
 
     // Eye position is at (0,0,0) in eye space
     vec3 mypos = m_vertex.xyz;  // No need for division by w
@@ -82,6 +68,5 @@ void main() {
             finalColor += col;
         }
     }
-//    finalColor += reflectionColor * 0.3; // Blending factor for reflections
     fragColor = finalColor;
 }
