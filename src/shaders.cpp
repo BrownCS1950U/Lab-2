@@ -1,10 +1,7 @@
+#include "shaders.h"
 
 #include <fstream>
 #include <stdexcept>
-
-#include <GL/glew.h>
-
-#include "shaders.h"
 
 std::string Shader::read_text_file(const char * filename) {
     std::string line;

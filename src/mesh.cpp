@@ -1,6 +1,3 @@
-#include <memory>
-#include <iostream>
-
 #include "mesh.h"
 #include "transform.h"
 
@@ -9,8 +6,10 @@
 #include "tiny_obj_loader.h"
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-#include "glm/gtc/type_ptr.hpp"
+#include <stb_image.h>
+#include <glm/gtc/type_ptr.hpp>
+#include <iostream>
+
 
 std::vector<tinyobj::material_t> materials;
 
