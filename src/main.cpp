@@ -10,13 +10,13 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    gl::Window::initialize(argv[1]);
+    Window::initialize(argv[1]);
 
-    while (gl::Window::isActive())
+    while (Window::isActive())
     {
-        gl::Window::update();
+        Window::update();
     }
 
-    glfwTerminate();
+    Window::cleanup();
     return 0;
 }

@@ -5,7 +5,7 @@
 #include <GL/glew.h>
 
 #include "shaders.h"
-namespace gl {
+
 std::string Shader::read_text_file(const char * filename) {
     std::string line;
     std::string content;
@@ -75,6 +75,12 @@ GLuint Shader::init_program (GLuint vertexshader, GLuint fragmentshader){
         program_errors(program);
         throw std::runtime_error("Shader program did not link correctly!");
     }
+
+    // Shaders can be detached and deleted after linking
+    glDetachShader(program, vertexshader);
+    glDetachShader(program, fragmentshader);
+    glDeleteShader(vertexshader);
+    glDeleteShader(fragmentshader);
+
     return program;
-}
 }

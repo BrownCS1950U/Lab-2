@@ -12,9 +12,7 @@
 #include "stb_image.h"
 #include "glm/gtc/type_ptr.hpp"
 
-namespace gl {
-
-    std::vector<tinyobj::material_t> materials;
+std::vector<tinyobj::material_t> materials;
 
     std::string Mesh::get_base_dir(std::string_view filepath) {
         size_t pos = filepath.find_last_of("/\\");
@@ -40,7 +38,7 @@ namespace gl {
         }
     }
 
-    void Mesh::load_texture (std::string filename, const std::string& texname, gl::DataTex& data) {
+    void Mesh::load_texture (std::string filename, const std::string& texname, DataTex& data) {
         fix_path(filename);
         std::filesystem::path texName = texname;
 
@@ -96,7 +94,7 @@ namespace gl {
         data.textures.try_emplace(texname, texture_id);
     }
 
-    void Mesh::bind_material_textures(const texture_names& mat, GLuint programId, gl::DataTex& data) {
+    void Mesh::bind_material_textures(const texture_names& mat, GLuint programId, DataTex& data) {
         // Activate and bind each texture type you care about
         // (Ambient, Diffuse, Specular, etc.) to different texture units.
         // Then set the appropriate uniform sampler in the shader.
@@ -337,4 +335,3 @@ namespace gl {
             glBindVertexArray(0);
         }
     }
-}

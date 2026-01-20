@@ -4,7 +4,6 @@
 #include "mesh.h"
 #include <GLFW/glfw3.h>
 
-namespace gl {
 class Window {
 public:
 
@@ -20,6 +19,7 @@ public:
     static void display();
     static void update();
     static bool isActive();
+    static void cleanup();
 
 private:
     // Variables to hold state
@@ -33,8 +33,8 @@ private:
     static bool keys[1024];
     static int window_width, window_height;
     static int current_vp_height, current_vp_width;
+    static float aspect_ratio;
 
     static GLFWwindow* glfwWindow;
-    static std::vector<gl::DataTex> m_data;
+    static std::vector<DataTex> m_data;
 };
-}
