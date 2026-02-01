@@ -28,6 +28,23 @@ int Window::current_vp_width = window_width / 6;
 int Window::current_vp_height = window_height;
 float Window::aspect_ratio = 0.0f;
 
+// =========== INITIALIZING LIGHTS ===========
+std::array<glm::vec4, Window::num_lights>  Window::m_lightPosn = {
+    glm::vec4(0.f, 100.f, 200.f, 1.f),
+    glm::vec4(300.f, 400.f, 500.f, 1.f),
+    glm::vec4(-200.f, 100.f, 0.f, 1.f),
+    glm::vec4(200.f, 200.f, 200.f, 1.f),
+    glm::vec4(0.f, 0.f, 800.f, 1.f)
+};
+
+std::array<glm::vec4, Window::num_lights> Window::m_lightCol = {
+    glm::vec4(1.f, 1.f, 1.f, 1.f),
+    glm::vec4(1.f, 1.f, 1.f, 1.f),
+    glm::vec4(1.f, 1.f, 1.f, 1.f),
+    glm::vec4(1.f, 1.f, 1.f, 1.f),
+    glm::vec4(1.f, 1.f, 1.f, 1.f)
+};
+
 std::vector<DataTex> Window::m_data = std::vector<DataTex>();
 GLFWwindow* Window::glfwWindow = nullptr;
 
@@ -306,6 +323,7 @@ int Window::initialize(const std::string& filename) {
         std::cerr << "Error: Failed to load mesh from " << filename << std::endl;
         return -1;
     }
+
     m_data.push_back(std::move(newObj));
     return 1;
 }
@@ -313,28 +331,10 @@ int Window::initialize(const std::string& filename) {
 void Window::display() {
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    const int num_lights = 5;
-
-    // Light positions
-    std::array<glm::vec4, num_lights> lightPosn {
-            glm::vec4(0.f, 1.f, 2.f, 1.f),
-            glm::vec4(3.f, 4.f, 5.f, 1.f),
-            glm::vec4(-2.f, 1.f, 0.f, 1.f),
-            glm::vec4(2.f, 2.f, 2.f, 1.f),
-            glm::vec4(0.f, 0.f, 8.f, 1.f)
-    };
-
-    std::array<glm::vec4, num_lights> lightCol {
-            glm::vec4(1.f, 1.f, 1.f, 0.2f),
-            glm::vec4(1.f, 1.f, 1.f, 0.2f),
-            glm::vec4(1.f, 1.f, 1.f, 0.2f),
-            glm::vec4(1.f, 1.f, 1.f, 0.2f),
-            glm::vec4(1.f, 1.f, 1.f, 0.2f)
-    };
 
     // Send arrays (positions & colors)
-    glUniform4fv(glGetUniformLocation(shaderProgram, "light_posn"), num_lights, glm::value_ptr(lightPosn[0]));
-    glUniform4fv(glGetUniformLocation(shaderProgram, "light_col"), num_lights, glm::value_ptr(lightCol[0]));
+    glUniform4fv(glGetUniformLocation(shaderProgram, "light_posn"), num_lights, glm::value_ptr(m_lightPosn[0]));
+    glUniform4fv(glGetUniformLocation(shaderProgram, "light_col"), num_lights, glm::value_ptr(m_lightCol[0]));
 
     for(DataTex& data : m_data) {
         // Skip empty meshes
@@ -436,22 +436,23 @@ void Window::update() {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     ImGui::Separator(); ImGui::TextColored({0.0f, 1.0f, 1.0f, 1.0f}, "Render Settings"); ImGui::Separator();
-
-    if (ImGui::Checkbox("Enable VSync", &vsync_enabled)) {
-        glfwSwapInterval(vsync_enabled ? 1 : 0);
-    }
-
-    ImGui::Text("Filtering Mode: ");
-    const char* filter_options[] = { "None", "Bilinear", "Trilinear", "Anisotropic" };
-    if (ImGui::Combo(" ", &filter_mode, filter_options, 4)) {
-        applyTextureFiltering();
-    }
-    ImGui::Text(" ");
+    ImGui::Text("TODO: Uncomment and play around");
+    //
+    // if (ImGui::Checkbox("Enable VSync", &vsync_enabled)) {
+    //     glfwSwapInterval(vsync_enabled ? 1 : 0);
+    // }
+    //
+    // ImGui::Text("Filtering Mode: ");
+    // const char* filter_options[] = { "None", "Bilinear", "Trilinear", "Anisotropic" };
+    // if (ImGui::Combo(" ", &filter_mode, filter_options, 4)) {
+    //     applyTextureFiltering();
+    // }
+    // ImGui::Text(" ");
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     ImGui::Separator(); ImGui::TextColored({0.0f, 1.0f, 1.0f, 1.0f}, "Lighting"); ImGui::Separator();
-    ImGui::Text("Most lights are switched off by default.");
-    ImGui::Text("The belowsliders can play with the light ");
+    ImGui::Text("TODO: ");
+    ImGui::Text("Create sliders below to play with the light ");
     ImGui::Text("positions and color intensities.");
 
     ////////////////////////////////////////////////////////////////////////////////////////////////

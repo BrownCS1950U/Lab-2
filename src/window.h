@@ -2,6 +2,9 @@
 
 #include "mesh.h"
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <array>
+#include <vector>
 
 class Window {
 public:
@@ -37,6 +40,11 @@ private:
     static int window_width, window_height;
     static int current_vp_height, current_vp_width;
     static float aspect_ratio;
+
+    static const int num_lights = 5;
+
+    static std::array<glm::vec4, num_lights> m_lightPosn;
+    static std::array<glm::vec4, num_lights> m_lightCol;
 
     static GLFWwindow* glfwWindow;
     static std::vector<DataTex> m_data;

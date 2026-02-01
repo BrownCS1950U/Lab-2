@@ -26,15 +26,17 @@ uniform float shininess;
 
 // Compute Phong Lighting
 vec4 compute_lighting(vec3 direction, vec4 lightcolor, vec3 normal, vec3 halfvec, vec4 mydiffuse, vec4 myspecular, float myshininess, float distance) {
-    float attenuation = 1.0 / (1.0 + 0.1 * distance + 0.02 * distance * distance); // Quadratic attenuation
-    vec4 corrected_light = lightcolor.rgba * attenuation; // Apply attenuation
+    distance = distance / 100.0; // Scale distance for attenuation
+    float attenuation = 1.0 / (1.0 + distance + 0.02 * distance * distance);
+
+    vec3 corrected_light = lightcolor.rgb * attenuation; // Apply attenuation
     float n_dot_l = max(dot(normal, direction), 0.0);
-    vec4 lambert = mydiffuse * corrected_light * n_dot_l;
+    vec3 lambert = mydiffuse.rgb * corrected_light * n_dot_l;
 
     float n_dot_h = max(dot(normal, halfvec), 0.0);
-    vec4 phong = myspecular * corrected_light * pow(n_dot_h, myshininess);
+    vec3 phong = myspecular.rgb * corrected_light * pow(n_dot_h, myshininess);
 
-    return lambert + phong;
+    return vec4(lambert + phong, lightcolor.a);
 }
 
 void main() {
